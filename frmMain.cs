@@ -23,9 +23,10 @@ namespace HashChecker
         AlgorithmType algorithmType;
         List<FileCheck> listInput = new List<FileCheck>();
         Dictionary<FileCheck.FileStatus, Color> colorStatus;
+        HashCalculator hcal = new HashCalculator();
 
-        string record_pattern;
-        string file_checksum;
+        string record_pattern, file_checksum;
+
         public frmMain()
         {
             InitializeComponent();
@@ -54,18 +55,41 @@ namespace HashChecker
 
         private async void btnCheck_Click(object sender, EventArgs e)
         {
-            HashCalculator hcal = new HashCalculator();
-            hcal.algorithm = algorithmType;
-            hcal.files = listInput.Select(f => f.full_path).ToList();
-            hcal.progressCallback += Hcal_progressCallback;
-            hcal.resultCallback += Hcal_resultCallback;
+            if (!hcal.IsRunning)
+            {
+                foreach (var f in listInput)
+                    f.Status = FileCheck.FileStatus.NONE;
+                olvFiles.SetObjects(listInput);
 
-            await hcal.ComputeHashAsync();
+                hcal.algorithm = algorithmType;
+                hcal.files = listInput.Select(f => f.full_path).ToList();
+                hcal.progressIndicator = new Progress<object[]>(Hcal_progressCallback);
+                hcal.resultCallback = new Progress<object[]>(Hcal_resultCallback);
 
+                btnCheck.Text = "Stop";
+                await hcal.ComputeHashAsync();
+                btnCheck.Text = "Check";
+
+                int m = listInput.Count(fi => fi.Status == FileCheck.FileStatus.SUCCESS);
+                int ff = listInput.Count(fi => fi.Status == FileCheck.FileStatus.FAILED);
+                int n = listInput.Count(fi => fi.Status == FileCheck.FileStatus.NOTFOUND);
+                lbResult.Text = $"Match: {m}, fail: {ff}, not found: {n}";
+            }
+            else
+                hcal.Stop();
+        }
+        private void olvFiles_FormatRow(object sender, BrightIdeasSoftware.FormatRowEventArgs e)
+        {
+            FileCheck file = (FileCheck)e.Model;
+            e.Item.ForeColor = colorStatus[file.Status];
         }
 
-        private void Hcal_resultCallback(string checksum, int index, Exception ex)
+        private void Hcal_resultCallback(object[] o)
         {
+            string checksum = (string)o[0];
+            int index = (int)o[1];
+            Exception ex = (Exception)o[2];
+
             var file = listInput[index];
             if (ex != null)
             {
@@ -75,15 +99,17 @@ namespace HashChecker
             else
             {
                 file.Checksum_new = checksum;
-                file.Status = file.Checksum_new == file.Checksum ? FileCheck.FileStatus.SUCCESS : FileCheck.FileStatus.FAILED;
+                file.Status = string.Compare(file.Checksum_new, file.Checksum, true) == 0 ? FileCheck.FileStatus.SUCCESS : FileCheck.FileStatus.FAILED;
             }
 
             olvFiles.RefreshObject(file);
             olvFiles.EnsureModelVisible(file);
         }
-
-        private void Hcal_progressCallback(string file_name, int percent)
+        private void Hcal_progressCallback(object[] o)
         {
+            string file_name = (string)o[0];
+            int percent = (int)o[1];
+
             progressBar1.Value = percent;
             this.Text = string.Format("{0}% - {1}", percent, Path.GetFileName(file_name));
         }
@@ -142,11 +168,6 @@ namespace HashChecker
             olvFiles.SetObjects(listInput);
         }
 
-        private void olvFiles_FormatRow(object sender, BrightIdeasSoftware.FormatRowEventArgs e)
-        {
-            FileCheck file = (FileCheck)e.Model;
-            e.Item.ForeColor = colorStatus[file.Status];
-        }
     }
 
     class FileCheck

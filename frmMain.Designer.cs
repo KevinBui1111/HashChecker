@@ -34,9 +34,10 @@
             this.olvColumn3 = ((BrightIdeasSoftware.OLVColumn)(new BrightIdeasSoftware.OLVColumn()));
             this.olvColumn4 = ((BrightIdeasSoftware.OLVColumn)(new BrightIdeasSoftware.OLVColumn()));
             this.lbDir = new System.Windows.Forms.Label();
-            this.btnCheckDup = new System.Windows.Forms.Button();
+            this.btnSave = new System.Windows.Forms.Button();
             this.btnCheck = new System.Windows.Forms.Button();
             this.progressBar1 = new System.Windows.Forms.ProgressBar();
+            this.lbResult = new System.Windows.Forms.Label();
             ((System.ComponentModel.ISupportInitialize)(this.olvFiles)).BeginInit();
             this.SuspendLayout();
             // 
@@ -58,10 +59,10 @@
             this.olvFiles.Cursor = System.Windows.Forms.Cursors.Default;
             this.olvFiles.FullRowSelect = true;
             this.olvFiles.GridLines = true;
-            this.olvFiles.Location = new System.Drawing.Point(12, 45);
+            this.olvFiles.Location = new System.Drawing.Point(12, 78);
             this.olvFiles.Name = "olvFiles";
             this.olvFiles.ShowGroups = false;
-            this.olvFiles.Size = new System.Drawing.Size(399, 298);
+            this.olvFiles.Size = new System.Drawing.Size(399, 265);
             this.olvFiles.TabIndex = 1;
             this.olvFiles.UseCompatibleStateImageBehavior = false;
             this.olvFiles.View = System.Windows.Forms.View.Details;
@@ -101,15 +102,15 @@
             this.lbDir.TabIndex = 5;
             this.lbDir.Text = "label1";
             // 
-            // btnCheckDup
+            // btnSave
             // 
-            this.btnCheckDup.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-            this.btnCheckDup.Location = new System.Drawing.Point(255, 12);
-            this.btnCheckDup.Name = "btnCheckDup";
-            this.btnCheckDup.Size = new System.Drawing.Size(75, 27);
-            this.btnCheckDup.TabIndex = 7;
-            this.btnCheckDup.Text = "Check Dup";
-            this.btnCheckDup.UseVisualStyleBackColor = true;
+            this.btnSave.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+            this.btnSave.Location = new System.Drawing.Point(336, 45);
+            this.btnSave.Name = "btnSave";
+            this.btnSave.Size = new System.Drawing.Size(75, 27);
+            this.btnSave.TabIndex = 7;
+            this.btnSave.Text = "Save";
+            this.btnSave.UseVisualStyleBackColor = true;
             // 
             // btnCheck
             // 
@@ -131,6 +132,15 @@
             this.progressBar1.Size = new System.Drawing.Size(399, 23);
             this.progressBar1.TabIndex = 8;
             // 
+            // lbResult
+            // 
+            this.lbResult.AutoSize = true;
+            this.lbResult.Location = new System.Drawing.Point(12, 51);
+            this.lbResult.Name = "lbResult";
+            this.lbResult.Size = new System.Drawing.Size(39, 15);
+            this.lbResult.TabIndex = 5;
+            this.lbResult.Text = "Result";
+            // 
             // frmMain
             // 
             this.AllowDrop = true;
@@ -138,8 +148,9 @@
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(423, 384);
             this.Controls.Add(this.progressBar1);
-            this.Controls.Add(this.btnCheckDup);
+            this.Controls.Add(this.btnSave);
             this.Controls.Add(this.btnCheck);
+            this.Controls.Add(this.lbResult);
             this.Controls.Add(this.lbDir);
             this.Controls.Add(this.olvFiles);
             this.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
@@ -161,9 +172,10 @@
         private BrightIdeasSoftware.OLVColumn olvColumn4;
         private BrightIdeasSoftware.OLVColumn olvColumn3;
         private System.Windows.Forms.Label lbDir;
-        private System.Windows.Forms.Button btnCheckDup;
+        private System.Windows.Forms.Button btnSave;
         private System.Windows.Forms.Button btnCheck;
         private System.Windows.Forms.ProgressBar progressBar1;
+        private System.Windows.Forms.Label lbResult;
     }
 }
 
