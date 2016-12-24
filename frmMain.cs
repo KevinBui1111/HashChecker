@@ -1,14 +1,11 @@
 ﻿using KevinHelper;
 using System;
 using System.Collections.Generic;
-using System.ComponentModel;
 using System.Data;
 using System.Drawing;
 using System.IO;
 using System.Linq;
-using System.Text;
 using System.Text.RegularExpressions;
-using System.Threading.Tasks;
 using System.Windows.Forms;
 using static KevinHelper.HashCalculator;
 
@@ -25,7 +22,7 @@ namespace HashChecker
         Dictionary<FileCheck.FileStatus, Color> colorStatus;
         HashCalculator hcal = new HashCalculator();
 
-        string record_pattern, file_checksum;
+        string record_pattern, file_checksum, folderCheck;
 
         public frmMain()
         {
@@ -36,20 +33,31 @@ namespace HashChecker
             colorStatus[FileCheck.FileStatus.SUCCESS] = Color.RoyalBlue;
             colorStatus[FileCheck.FileStatus.FAILED] = Color.Red;
             colorStatus[FileCheck.FileStatus.NOTFOUND] = Color.Gray;
+            cbHashType.SelectedIndex = 0;
         }
-
         private void frmMain_DragDrop(object sender, DragEventArgs e)
         {
             file_checksum = ((string[])e.Data.GetData(DataFormats.FileDrop))[0];
 
-            bool check = CheckInput();
-            if (check) PopularInput();
+            btnCheck.Enabled = btnSave.Enabled = false;
+            if (File.Exists(file_checksum))
+            {
+                bool check = CheckInput();
+                if (check) PopularInput();
+
+                btnCheck.Enabled = true;
+            }
+            else// if (Directory.Exists(file_checksum))
+            {
+                lbDir.Text = folderCheck = file_checksum;
+                olvFiles.ClearObjects();
+
+                btnSave.Enabled = true;
+            }
         }
         private void frmMain_DragEnter(object sender, DragEventArgs e)
         {
-            string file = ((string[])e.Data.GetData(DataFormats.FileDrop))[0];
-            bool is_file = File.Exists(file);
-            if (is_file && e.Data.GetDataPresent(DataFormats.FileDrop))
+            if (e.Data.GetDataPresent(DataFormats.FileDrop))
                 e.Effect = DragDropEffects.Copy;
         }
 
@@ -62,12 +70,13 @@ namespace HashChecker
                 olvFiles.SetObjects(listInput);
 
                 hcal.algorithm = algorithmType;
-                hcal.files = listInput.Select(f => f.full_path).ToList();
+                hcal.InputFiles = listInput.Select(f => f.full_path).ToList();
                 hcal.progressIndicator = new Progress<object[]>(Hcal_progressCallback);
                 hcal.resultCallback = new Progress<object[]>(Hcal_resultCallback);
 
                 btnCheck.Text = "Stop";
                 await hcal.ComputeHashAsync();
+                olvFiles.BuildList();
                 btnCheck.Text = "Check";
 
                 int m = listInput.Count(fi => fi.Status == FileCheck.FileStatus.SUCCESS);
@@ -77,6 +86,50 @@ namespace HashChecker
             }
             else
                 hcal.Stop();
+        }
+        private async void btnSave_Click(object sender, EventArgs e)
+        {
+            if (hcal.IsRunning)
+            {
+                hcal.Stop();
+                return;
+            }
+
+            listInput.Clear();
+            JobWalkDirectories walk = new JobWalkDirectories
+            {
+                searchFols = new List<JobWalkDirectories.SearchPath>
+                {
+                    new JobWalkDirectories.SearchPath { folder = folderCheck, m_subFolder = true }
+                }
+            };
+            List<FileInfo> result = await walk.WalkThroughAsync();
+            result.ForEach(f => listInput.Add(new FileCheck { full_path = f.FullName }));
+
+            olvFiles.SetObjects(listInput);
+
+            hcal.algorithm = algorithmType = cbHashType.SelectedIndex == 0 ? AlgorithmType.CRC32 :
+                cbHashType.SelectedIndex == 1 ? AlgorithmType.MD5 : AlgorithmType.SHA1;
+
+            hcal.progressIndicator = new Progress<object[]>(Hcal_progressCallback);
+            hcal.resultCallback = new Progress<object[]>(Hash_resultCallback);
+            hcal.InputFiles = result.Select(f => f.FullName).ToList();
+
+            btnSave.Text = "Stop";
+            await hcal.ComputeHashAsync();
+            btnSave.Text = "Save";
+            olvFiles.BuildList();
+
+            string root = Path.GetDirectoryName(folderCheck);
+            using (StreamWriter sw = new StreamWriter(folderCheck + "." + algorithmType))
+            {
+                foreach (var child in listInput)
+                {
+                    sw.WriteLine($"{child.Checksum} *{FileUtils.GetRelativePath(child.full_path, root)}");
+                }
+            }
+
+            MessageBox.Show("Save hash files successfully.");
         }
         private void olvFiles_FormatRow(object sender, BrightIdeasSoftware.FormatRowEventArgs e)
         {
@@ -93,7 +146,7 @@ namespace HashChecker
             var file = listInput[index];
             if (ex != null)
             {
-                Console.WriteLine(ex.Message);
+                //Console.WriteLine(ex.Message);
                 file.Status = FileCheck.FileStatus.NOTFOUND;
             }
             else
@@ -101,9 +154,6 @@ namespace HashChecker
                 file.Checksum_new = checksum;
                 file.Status = string.Compare(file.Checksum_new, file.Checksum, true) == 0 ? FileCheck.FileStatus.SUCCESS : FileCheck.FileStatus.FAILED;
             }
-
-            olvFiles.RefreshObject(file);
-            olvFiles.EnsureModelVisible(file);
         }
         private void Hcal_progressCallback(object[] o)
         {
@@ -111,7 +161,25 @@ namespace HashChecker
             int percent = (int)o[1];
 
             progressBar1.Value = percent;
-            this.Text = string.Format("{0}% - {1}", percent, Path.GetFileName(file_name));
+            this.Text = $"{percent}% - {Path.GetFileName(file_name)}";
+        }
+        private void Hash_resultCallback(object[] o)
+        {
+            string checksum = (string)o[0];
+            int index = (int)o[1];
+            Exception ex = (Exception)o[2];
+
+            var file = listInput[index];
+            if (ex != null)
+            {
+                Console.WriteLine(ex.Message);
+                file.Status = FileCheck.FileStatus.FAILED;
+            }
+            else
+            {
+                file.Checksum = checksum;
+                file.Status = FileCheck.FileStatus.SUCCESS;
+            }
         }
 
         bool CheckInput()
@@ -137,10 +205,8 @@ namespace HashChecker
                 algorithmType = AlgorithmType.SHA1;
             }
 
-            if (algorithmType != AlgorithmType.NONE)
-                lbDir.Text = algorithmType + " - " + file_checksum;
-            else
-                lbDir.Text = "Error!";
+            cbHashType.SelectedIndex = (int)algorithmType - 1;
+            lbDir.Text = algorithmType != AlgorithmType.NONE ? lbDir.Text = file_checksum: "Error!";
 
             return algorithmType != AlgorithmType.NONE;
         }
@@ -167,7 +233,6 @@ namespace HashChecker
 
             olvFiles.SetObjects(listInput);
         }
-
     }
 
     class FileCheck

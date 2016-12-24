@@ -38,6 +38,7 @@
             this.btnCheck = new System.Windows.Forms.Button();
             this.progressBar1 = new System.Windows.Forms.ProgressBar();
             this.lbResult = new System.Windows.Forms.Label();
+            this.cbHashType = new System.Windows.Forms.ComboBox();
             ((System.ComponentModel.ISupportInitialize)(this.olvFiles)).BeginInit();
             this.SuspendLayout();
             // 
@@ -91,16 +92,16 @@
             this.olvColumn4.AspectName = "Dir";
             this.olvColumn4.AspectToStringFormat = "";
             this.olvColumn4.Text = "Directory";
-            this.olvColumn4.Width = 89;
+            this.olvColumn4.Width = 136;
             // 
             // lbDir
             // 
             this.lbDir.AutoSize = true;
             this.lbDir.Location = new System.Drawing.Point(12, 18);
             this.lbDir.Name = "lbDir";
-            this.lbDir.Size = new System.Drawing.Size(38, 15);
+            this.lbDir.Size = new System.Drawing.Size(55, 15);
             this.lbDir.TabIndex = 5;
-            this.lbDir.Text = "label1";
+            this.lbDir.Text = "Directory";
             // 
             // btnSave
             // 
@@ -111,6 +112,7 @@
             this.btnSave.TabIndex = 7;
             this.btnSave.Text = "Save";
             this.btnSave.UseVisualStyleBackColor = true;
+            this.btnSave.Click += new System.EventHandler(this.btnSave_Click);
             // 
             // btnCheck
             // 
@@ -135,11 +137,24 @@
             // lbResult
             // 
             this.lbResult.AutoSize = true;
-            this.lbResult.Location = new System.Drawing.Point(12, 51);
+            this.lbResult.Location = new System.Drawing.Point(85, 56);
             this.lbResult.Name = "lbResult";
             this.lbResult.Size = new System.Drawing.Size(39, 15);
             this.lbResult.TabIndex = 5;
             this.lbResult.Text = "Result";
+            // 
+            // cbHashType
+            // 
+            this.cbHashType.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+            this.cbHashType.FormattingEnabled = true;
+            this.cbHashType.Items.AddRange(new object[] {
+            "CRC32",
+            "MD5",
+            "SHA1"});
+            this.cbHashType.Location = new System.Drawing.Point(15, 48);
+            this.cbHashType.Name = "cbHashType";
+            this.cbHashType.Size = new System.Drawing.Size(64, 23);
+            this.cbHashType.TabIndex = 9;
             // 
             // frmMain
             // 
@@ -147,6 +162,7 @@
             this.AutoScaleDimensions = new System.Drawing.SizeF(7F, 15F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(423, 384);
+            this.Controls.Add(this.cbHashType);
             this.Controls.Add(this.progressBar1);
             this.Controls.Add(this.btnSave);
             this.Controls.Add(this.btnCheck);
@@ -155,7 +171,7 @@
             this.Controls.Add(this.olvFiles);
             this.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.Name = "frmMain";
-            this.Text = "Form1";
+            this.Text = "Hash Checker v1.0 - 2016/12/24";
             this.DragDrop += new System.Windows.Forms.DragEventHandler(this.frmMain_DragDrop);
             this.DragEnter += new System.Windows.Forms.DragEventHandler(this.frmMain_DragEnter);
             ((System.ComponentModel.ISupportInitialize)(this.olvFiles)).EndInit();
@@ -176,6 +192,7 @@
         private System.Windows.Forms.Button btnCheck;
         private System.Windows.Forms.ProgressBar progressBar1;
         private System.Windows.Forms.Label lbResult;
+        private System.Windows.Forms.ComboBox cbHashType;
     }
 }
 
