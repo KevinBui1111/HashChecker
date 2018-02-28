@@ -91,6 +91,11 @@
   <ItemGroup>
     <None Include="Resources\sum.ico" />
   </ItemGroup>
+  <ItemGroup>
+    <Content Include="Resources\check.png" />
+    <Content Include="Resources\clear.png" />
+    <Content Include="Resources\save.png" />
+  </ItemGroup>
   <Import Project="..\KevinHelper\KevinHelper.projitems" Label="Shared" />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

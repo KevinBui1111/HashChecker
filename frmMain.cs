@@ -19,10 +19,11 @@ namespace HashChecker
 
         AlgorithmType algorithmType;
         List<FileCheck> listInput = new List<FileCheck>();
+        List<FileCheck> listGroup = new List<FileCheck>();
         Dictionary<FileCheck.FileStatus, Color> colorStatus;
         HashCalculator hcal = new HashCalculator();
 
-        string record_pattern, file_checksum, folderCheck;
+        string record_pattern, file_checksum;
 
         public frmMain()
         {
@@ -37,20 +38,30 @@ namespace HashChecker
         }
         private void frmMain_DragDrop(object sender, DragEventArgs e)
         {
-            file_checksum = ((string[])e.Data.GetData(DataFormats.FileDrop))[0];
-
+            string[] files = (string[])e.Data.GetData(DataFormats.FileDrop);
+            
             btnCheck.Enabled = btnSave.Enabled = false;
-            if (File.Exists(file_checksum))
+            if (files.Length == 1 && File.Exists(files[0]) && !string.IsNullOrEmpty(Path.GetExtension(files[0])) &&
+                Enum.GetNames(typeof(AlgorithmType)).Contains(Path.GetExtension(files[0]).Substring(1).ToUpper()))
             {
+                file_checksum = files[0];
                 bool check = CheckInput();
                 if (check) PopularInput();
 
-                btnCheck.Enabled = true;
+                btnCheck.Enabled = check;
             }
-            else// if (Directory.Exists(file_checksum))
+            else
             {
-                lbDir.Text = folderCheck = file_checksum;
-                olvFiles.ClearObjects();
+                foreach (string file in files)
+                {
+                    listGroup.Add(new FileCheck
+                    {
+                        full_path = file,
+                        IsFolder = Directory.Exists(file)
+                    });
+                    //lbDir.Text = folderCheck = file_checksum;
+                }
+                olvFiles.SetObjects(listGroup);
 
                 btnSave.Enabled = true;
             }
@@ -96,38 +107,43 @@ namespace HashChecker
             }
 
             listInput.Clear();
-            JobWalkDirectories walk = new JobWalkDirectories
-            {
-                searchFols = new List<JobWalkDirectories.SearchPath>
-                {
-                    new JobWalkDirectories.SearchPath { folder = folderCheck, m_subFolder = true }
-                }
-            };
-            List<FileInfo> result = await walk.WalkThroughAsync();
-            result.ForEach(f => listInput.Add(new FileCheck { full_path = f.FullName }));
+            olvFiles.ClearObjects();
 
-            olvFiles.SetObjects(listInput);
+            foreach (FileCheck folder in listGroup)
+            {
+                if (folder.IsFolder)
+                {
+                    JobWalkDirectories walk = new JobWalkDirectories
+                    {
+                        searchFols = new List<JobWalkDirectories.SearchPath>
+                        {
+                            new JobWalkDirectories.SearchPath { folder = folder.full_path, m_subFolder = true }
+                        }
+                    };
+                    List<FileInfo> result = await walk.WalkThroughAsync();
+                    result.ForEach(f => listInput.Add(new FileCheck { full_path = f.FullName, root = folder.Dir }));
+                }
+                else
+                    listInput.Add(new FileCheck { full_path = folder.full_path, root = null });
+
+                olvFiles.AddObjects(listInput);
+            }
 
             hcal.algorithm = algorithmType = cbHashType.SelectedIndex == 0 ? AlgorithmType.CRC32 :
                 cbHashType.SelectedIndex == 1 ? AlgorithmType.MD5 : AlgorithmType.SHA1;
 
             hcal.progressIndicator = new Progress<object[]>(Hcal_progressCallback);
             hcal.resultCallback = new Progress<object[]>(Hash_resultCallback);
-            hcal.InputFiles = result.Select(f => f.FullName).ToList();
+            hcal.InputFiles = listInput.Select(f => f.full_path).ToList();
 
             btnSave.Text = "Stop";
             await hcal.ComputeHashAsync();
             btnSave.Text = "Save";
             olvFiles.BuildList();
 
-            string root = Path.GetDirectoryName(folderCheck);
-            using (StreamWriter sw = new StreamWriter(folderCheck + "." + algorithmType))
-            {
+            using (StreamWriter sw = new StreamWriter(listGroup[0].full_path + "." + algorithmType))
                 foreach (var child in listInput)
-                {
-                    sw.WriteLine($"{child.Checksum} *{FileUtils.GetRelativePath(child.full_path, root)}");
-                }
-            }
+                    sw.WriteLine($"{child.Checksum} *{FileUtils.GetRelativePath(child.full_path, child.root)}");
 
             MessageBox.Show("Save hash files successfully.");
         }
@@ -182,6 +198,13 @@ namespace HashChecker
             }
         }
 
+        private void btnClear_Click(object sender, EventArgs e)
+        {
+            olvFiles.ClearObjects();
+            listInput.Clear();
+            listGroup.Clear();
+        }
+
         bool CheckInput()
         {
             string line;
@@ -210,6 +233,19 @@ namespace HashChecker
 
             return algorithmType != AlgorithmType.NONE;
         }
+
+        private void olvFiles_KeyUp(object sender, KeyEventArgs e)
+        {
+            if (e.KeyCode == Keys.Delete && olvFiles.SelectedObjects.Count > 0)
+            {
+                foreach (FileCheck o in olvFiles.SelectedObjects)
+                {
+                    listGroup.Remove(o);
+                }
+                olvFiles.SetObjects(listGroup);
+            }
+        }
+
         void PopularInput()
         {
             string folder = Path.GetDirectoryName(file_checksum);
@@ -238,8 +274,10 @@ namespace HashChecker
     class FileCheck
     {
         public string full_path { get; set; }
+        public string root { get; set; }
         public string Name { get { return Path.GetFileName(full_path); } }
         public string Dir { get { return Path.GetDirectoryName(full_path); } }
+        public bool IsFolder { get; set; }
 
         public string Checksum { get; set; }
         public string Checksum_new { get; set; }
