@@ -126,8 +126,9 @@ namespace HashChecker
                 else
                     listInput.Add(new FileCheck { full_path = folder.full_path, root = null });
 
-                olvFiles.AddObjects(listInput);
             }
+
+            olvFiles.AddObjects(listInput);
 
             hcal.algorithm = algorithmType = cbHashType.SelectedIndex == 0 ? AlgorithmType.CRC32 :
                 cbHashType.SelectedIndex == 1 ? AlgorithmType.MD5 : AlgorithmType.SHA1;
