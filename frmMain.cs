@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.Data;
+using System.Diagnostics;
 using System.Drawing;
 using System.IO;
 using System.Linq;
@@ -29,6 +30,7 @@ namespace HashChecker
         {
             InitializeComponent();
 
+            this.Text = "Hash Checker v2.1 - 2018/10/28";
             colorStatus = new Dictionary<FileCheck.FileStatus, Color>();
             colorStatus[FileCheck.FileStatus.NONE] = Color.Black;
             colorStatus[FileCheck.FileStatus.SUCCESS] = Color.RoyalBlue;
@@ -176,9 +178,14 @@ namespace HashChecker
         {
             string file_name = (string)o[0];
             int percent = (int)o[1];
+            int index = (int)o[2];
 
             progressBar1.Value = percent;
             this.Text = $"{percent}% - {Path.GetFileName(file_name)}";
+
+            //refresh grid
+            for (int i = 0; i < olvFiles.RowsPerPage; ++i)
+                olvFiles.RefreshItem(olvFiles.GetItem(olvFiles.TopItemIndex + i));
         }
         private void Hash_resultCallback(object[] o)
         {
