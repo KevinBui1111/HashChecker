@@ -14,9 +14,9 @@ namespace HashChecker
 {
     public partial class frmMain : Form
     {
-        const string record_pattern_crc32 = @"^(\w{8}) \*(.+)$";
-        const string record_pattern_md5 = @"^(\w{32}) \*(.+)$";
-        const string record_pattern_sha1 = @"^(\w{40}) \*(.+)$";
+        const string record_pattern_crc32 = @"^(\w{8}) \*?(.+)$";
+        const string record_pattern_md5 = @"^(\w{32}) \*?(.+)$";
+        const string record_pattern_sha1 = @"^(\w{40}) \*?(.+)$";
 
         AlgorithmType algorithmType;
         List<FileCheck> listInput = new List<FileCheck>();
@@ -146,7 +146,7 @@ namespace HashChecker
 
             using (StreamWriter sw = new StreamWriter(listGroup[0].full_path + "." + algorithmType))
                 foreach (var child in listInput)
-                    sw.WriteLine($"{child.Checksum} *{FileUtils.GetRelativePath(child.full_path, child.root)}");
+                    sw.WriteLine($"{child.Checksum} {FileUtils.GetRelativePath(child.full_path, child.root)}");
 
             MessageBox.Show("Save hash files successfully.");
         }
